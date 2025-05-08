@@ -3,11 +3,6 @@
 import { useState } from 'react';
 import styles from './page.module.css';
 
-type Coordinate = {
-  y: number;
-  x: number;
-};
-
 const directions = [
   [-1, 0], //上
   [-1, 1], //右上
@@ -18,6 +13,17 @@ const directions = [
   [0, -1], //左
   [-1, -1], //左上
 ];
+
+const deleteCandidate = (board: number[][], newBoard: number[][]) => {
+  for (let i = 0; i < 81; i++) {
+    const deleteY: number = i % 9;
+    const deleteX: number = Math.floor(i / 9);
+    if (board[deleteY][deleteX] === 2) {
+      newBoard[deleteY][deleteX] = 0;
+    }
+  }
+};
+//#TODO文字を入力するとそれに対応した数値を返してくれる関数を作る
 
 //============以下home====================================
 export default function Home() {
@@ -34,45 +40,65 @@ export default function Home() {
     [0, 0, 0, 0, 0, 0, 0, 0, 0],
   ]);
   //以下structureClone()というboardの配列を変更する関数
-  const [lastCoordinate, setLastCoodinate] = useState([0, 0]);
   const newBoard: number[][] = structuredClone(board);
 
-  const [currentClick, setCurrentClick] = useState<number[] | null>(null);
   const [lastClick, setLastClick] = useState<number[] | null>(null);
 
   const clickHandler = (
     clickY: number,
     clickX: number,
-    board: number[][] | null,
+    board: number[][],
     newBoard: number[][],
     directions: number[][],
-    currentClick: number[] | null,
-    lastClick: number[] | null,
+    // currentClick: number[] | null,
+    // lastClick: number[] | null,
   ) => {
-    setCurrentClick([clickY, clickX]);
-    setLastClick(currentClick);
     const candidateY: number = clickY + directions[0][0]; //;
     const candidateX: number = clickX + directions[0][1]; //directions[0][1];
-    const lastY: number = clickY - directions[0][0];
-    const lastX: number = clickX - directions[0][1];
+
+    // console.log('lastClick', lastClick);
+    // if (board[clickY][clickX] === 0) {
+    //   return;
+    //   //押したところが候補地だったら
+    // }
+    // if (board[clickY][clickX] === 2) {
+    //   //歩の場合
+    //   if (board[lastClick[0]][lastClick[1]] === 1) {
+    //     newBoard[clickY][clickX] = 1;
+    //     newBoard[lastClick[0]][lastClick[1]] = 0;
+    //     console.log('last coordinate');
+    //   }
+    //   //押したところが駒だったら
+    // } else {
+    //   deleteCandidate(board, newBoard);
+    //   if (board[clickY][clickX] === 1) {
+    //     console.log('select piece');
+    //     newBoard[candidateY][candidateX] = 2;
+    //   }
+    // }
+
     //空白を押したときは何もしない
-    console.log('currentClick', currentClick);
-    console.log('lastClick', lastClick);
-    if (board[currentClick[0]][currentClick[1]] === 0) {
-      return;
-      //押したところが候補地だったら
-    } else if (board[currentClick[0]][currentClick[1]] === 2) {
-      //歩の場合
+    if (board[clickY][clickX] === 0) {
+      console.log('vacant');
+      deleteCandidate(board, newBoard);
+    }
+    //候補地を押したとき
+    if (board[clickY][clickX] === 2) {
+      console.log('click candidate');
+      //
       if (board[lastClick[0]][lastClick[1]] === 1) {
         newBoard[clickY][clickX] = 1;
-        newBoard[lastY][lastX] = 0;
-        console.log('last coordinate');
+        newBoard[lastClick[0]][lastClick[1]] = 0;
       }
-      //押したところが駒だったら
-    } else {
-      if (board[currentClick[0]][currentClick[1]] === 1) {
+    }
+    //駒を押したとき
+    if (board[clickY][clickX] === 1) {
+      console.log('click piece');
+      deleteCandidate(board, newBoard);
+      if (board[clickY][clickX] === 1) {
         console.log('select piece');
         newBoard[candidateY][candidateX] = 2;
+        setLastClick([clickY, clickX]);
       }
     }
     setBoard(newBoard);
@@ -86,9 +112,7 @@ export default function Home() {
             <div
               className={styles.cell}
               key={`${clickX}-${clickY}`}
-              onClick={() =>
-                clickHandler(clickY, clickX, board, newBoard, directions, currentClick, lastClick)
-              }
+              onClick={() => clickHandler(clickY, clickX, board, newBoard, directions)}
             >
               {color !== 0 && (
                 <div
