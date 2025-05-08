@@ -3,6 +3,11 @@
 import { useState } from 'react';
 import styles from './page.module.css';
 
+type Coordinate = {
+  y: number;
+  x: number;
+};
+
 const directions = [
   [-1, 0], //上
   [-1, 1], //右上
@@ -14,10 +19,6 @@ const directions = [
   [-1, -1], //左上
 ];
 
-const pieceName: string[] = ['none', 'Pawn'];
-
-const showCandidateSite = () => {};
-
 //============以下home====================================
 export default function Home() {
   const [turn, setTurn] = useState(1);
@@ -28,7 +29,7 @@ export default function Home() {
     [0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 1, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1],
     [0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0],
   ]);
@@ -36,42 +37,45 @@ export default function Home() {
   const [lastCoordinate, setLastCoodinate] = useState([0, 0]);
   const newBoard: number[][] = structuredClone(board);
 
+  const [currentClick, setCurrentClick] = useState<number[] | null>(null);
+  const [lastClick, setLastClick] = useState<number[] | null>(null);
+
   const clickHandler = (
-    clickX: number,
     clickY: number,
-    board: number[][],
+    clickX: number,
+    board: number[][] | null,
+    newBoard: number[][],
     directions: number[][],
+    currentClick: number[] | null,
+    lastClick: number[] | null,
   ) => {
-    const candidateY: number = clickY - 1; //directions[0][0];
-    const candidateX: number = clickX + 0; //directions[0][1];
-    const lastY: number = clickY + 1;
-    const lastX: number = clickX - 0;
+    setCurrentClick([clickY, clickX]);
+    setLastClick(currentClick);
+    const candidateY: number = clickY + directions[0][0]; //;
+    const candidateX: number = clickX + directions[0][1]; //directions[0][1];
+    const lastY: number = clickY - directions[0][0];
+    const lastX: number = clickX - directions[0][1];
     //空白を押したときは何もしない
-    console.log(clickY, clickX);
-    console.log(candidateY, candidateX);
-    if (board[clickY][clickX] === 0) {
-      console.log('stop function');
+    console.log('currentClick', currentClick);
+    console.log('lastClick', lastClick);
+    if (board[currentClick[0]][currentClick[1]] === 0) {
       return;
       //押したところが候補地だったら
-    } else if (board[clickY][clickX] === 2) {
-      console.log('before moving piece');
+    } else if (board[currentClick[0]][currentClick[1]] === 2) {
       //歩の場合
-      if (board[lastY][lastX] === 1) {
-        console.log('move piece');
+      if (board[lastClick[0]][lastClick[1]] === 1) {
         newBoard[clickY][clickX] = 1;
         newBoard[lastY][lastX] = 0;
-        setBoard(newBoard);
+        console.log('last coordinate');
       }
       //押したところが駒だったら
     } else {
-      if (board[clickY][clickX] === 1) {
+      if (board[currentClick[0]][currentClick[1]] === 1) {
         console.log('select piece');
-        console.log(clickY, clickX);
-        console.log(candidateY, candidateX);
         newBoard[candidateY][candidateX] = 2;
-        setBoard(newBoard);
       }
     }
+    setBoard(newBoard);
   };
 
   return (
@@ -82,7 +86,9 @@ export default function Home() {
             <div
               className={styles.cell}
               key={`${clickX}-${clickY}`}
-              onClick={() => clickHandler(clickX, clickY, board, newBoard)}
+              onClick={() =>
+                clickHandler(clickY, clickX, board, newBoard, directions, currentClick, lastClick)
+              }
             >
               {color !== 0 && (
                 <div
